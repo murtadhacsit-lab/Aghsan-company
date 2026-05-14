@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>نظام إدارة مشاريع المقاولات | شركة البناء المتكاملة</title>
+    <!-- html2canvas + jsPDF libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Tahoma', 'Cairo', 'Rubik', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #e9eef3 0%, #d4dee9 100%);
+            min-height: 100vh;
+            padding: 30px 20px;
+        }
+
+        .app-container {
+            max-width: 1280px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 32px;
+            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .header {
+            background: #0a2b3e;
+            padding: 20px 32px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            border-bottom: 5px solid #e6b422;
+        }
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .company-logo {
+            width: 70px;
+            height: auto;
+            background: white;
+            border-radius: 16px;
+            padding: 6px;
+            background: #fff;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .company-name {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            border-right: 3px solid #e6b422;
+            padding-right: 18px;
+        }
+        .reset-engineer {
+            margin-right: auto;
+            background: #e6b422;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-weight: bold;
+            color: #0a2b3e;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.9rem;
+        }
+        .reset-engineer:hover {
+            background: #ffcd4a;
+            transform: scale(1.02);
+        }
+
+        .form-section {
+            padding: 28px 32px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0a2b3e;
+            margin-bottom: 20px;
+            border-right: 6px solid #e6b422;
+            padding-right: 15px;
+        }
+        .row-fields {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 10px;
+        }
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .field-group label {
+            font-weight: 600;
+            color: #1e3a5f;
+            font-size: 0.9rem;
+        }
+        .field-group input, .field-group select {
+            padding: 12px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 16px;
+            font-size: 1rem;
+            background: #fefefe;
+            transition: 0.2s;
+        }
+        .field-group input:focus {
+            outline: none;
+            border-color: #e6b422;
+            box-shadow: 0 0 0 3px rgba(230, 180, 34, 0.2);
+        }
+
+        .items-table-wrapper {
+            overflow-x: auto;
+            margin: 25px 0 15px;
+        }
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #f8fafc;
+            border-radius: 24px;
+            overflow: hidden;
+        }
+        .details-table th, .details-table td {
+            border: 1px solid #d1dbe8;
+            padding: 14px 12px;
+            text-align: center;
+            vertical-align: middle;
+        }
+        .details-table th {
+            background: #1e3a5f;
+            color: white;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .details-table td input {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 12px;
+            border: 1px solid #cbd5e1;
+            background: white;
+        }
+        .remove-row-btn {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        .remove-row-btn:hover {
+            background: #b91c1c;
+        }
+        .add-row-btn {
+            background: #0f3b2c;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            transition: 0.2s;
+        }
+        .add-row-btn:hover {
+            background: #1f5e46;
+        }
+
+        .totals-panel {
+            background: #f1f5f9;
+            border-radius: 28px;
+            padding: 20px 25px;
+            margin-top: 30px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .total-card {
+            background: white;
+            border-radius: 24px;
+            padding: 10px 24px;
+            min-width: 150px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .total-card span:first-child {
+            font-size: 0.85rem;
+            color: #475569;
+        }
+        .total-card .value {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #0f3b2c;
+        }
+        .btn-generate {
+            background: #e6b422;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 48px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #0a2b3e;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .btn-generate:hover {
+            background: #ffcd4a;
+            transform: translateY(-2px);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        .login-modal {
+            background: white;
+            width: 90%;
+            max-width: 450px;
+            border-radius: 48px;
+            padding: 32px 28px;
+            text-align: center;
+            box-shadow: 0 30px 40px rgba(0,0,0,0.3);
+            animation: fadeSlide 0.3s ease;
+        }
+        @keyframes fadeSlide {
+            from { opacity: 0; transform: translateY(-30px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+        .login-modal img {
+            width: 90px;
+            margin-bottom: 12px;
+            border-radius: 20px;
+            background: #f8fafc;
+            padding: 8px;
+        }
+        .login-modal h3 {
+            color: #0a2b3e;
+            margin-bottom: 20px;
+            font-size: 1.7rem;
+        }
+        .login-modal input {
+            width: 100%;
+            padding: 14px;
+            border-radius: 60px;
+            border: 1px solid #ccc;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .login-modal button {
+            background: #0a2b3e;
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 12px;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .hidden-app {
+            display: none;
+        }
+
+        @media (max-width: 700px) {
+            .form-section {
+                padding: 20px;
+            }
+            .total-card .value {
+                font-size: 1.2rem;
+            }
+        }
+
+        .footer-note {
+            text-align: center;
+            padding: 16px;
+            background: #eef2f6;
+            color: #4b5563;
+            font-size: 0.8rem;
+            border-top: 1px solid #dce3ec;
+        }
+        .copyright {
+            font-weight: 500;
+            color: #0f3b2c;
+            margin-top: 5px;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Login Modal -->
+<div id="loginModal" class="modal-overlay">
+    <div class="login-modal">
+        <img src="image-removebg-preview.png" alt="شعار الشركة" onerror="this.src='https://via.placeholder.com/90?text=Logo'">
+        <h3>🔐 تسجيل دخول المهندس</h3>
+        <p style="margin-bottom: 12px; color:#4b5563;">أدخل اسمك للمتابعة</p>
+        <input type="text" id="engineerNameInput" placeholder="الاسم الكامل للمهندس المشرف" autocomplete="off">
+        <button id="confirmLoginBtn">دخول إلى النظام ➕</button>
+    </div>
+</div>
+
+<!-- Main App -->
+<div id="mainApp" class="app-container hidden-app">
+    <div class="header">
+        <div class="logo-area">
+            <img src="image-removebg-preview.png" alt="شعار الشركة" class="company-logo" onerror="this.src='https://via.placeholder.com/70?text=Logo'">
+            <div class="company-name">مكتب أعضاء لبنان | مقاولات البناء</div>
+        </div>
+        <button id="resetEngineerBtn" class="reset-engineer">🔄 تغيير المهندس</button>
+    </div>
+
+    <div class="form-section">
+        <div class="section-title">📋 معلومات المشروع الأساسية</div>
+        <div class="row-fields">
+            <div class="field-group">
+                <label>📍 موقع العمل</label>
+                <input type="text" id="workLocation" placeholder="مثال: منطقة الجادرية - بغداد">
+            </div>
+            <div class="field-group">
+                <label>🏠 صاحب الموقع / المنزل</label>
+                <input type="text" id="ownerName" placeholder="اسم المالك">
+            </div>
+            <div class="field-group">
+                <label>👷 المهندس المشرف</label>
+                <input type="text" id="superEngineer" placeholder="اسم المهندس المشرف">
+            </div>
+            <div class="field-group">
+                <label>📞 هاتف الشركة</label>
+                <input type="tel" id="companyPhone" placeholder="٠٧٨٦٦٠٠٢٢٦٦">
+            </div>
+            <div class="field-group">
+                <label>📱 هاتف المهندس المشرف</label>
+                <input type="tel" id="engineerPhone" placeholder="رقم المهندس">
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <div class="section-title">📌 تفاصيل الأعمال والبنود</div>
+        <div class="items-table-wrapper">
+            <table class="details-table" id="itemsTable">
+                <thead>
+                    <tr>
+                        <th style="width: 55%">التفاصيل / البيان</th>
+                        <th style="width: 30%">السعر (دينار عراقي)</th>
+                        <th style="width: 15%">حذف</th>
+                    </tr>
+                </thead>
+                <tbody id="itemsTableBody"></tbody>
+            </table>
+        </div>
+        <button id="addRowBtn" class="add-row-btn">➕ إضافة بند جديد</button>
+
+        <div class="totals-panel">
+            <div class="total-card">
+                <span>💰 المجموع الكلي</span>
+                <div class="value" id="totalSum">0</div>
+            </div>
+            <div class="field-group" style="min-width: 160px;">
+                <label>الواصل (المدفوع)</label>
+                <input type="number" id="amountPaid" value="0" step="1000" style="border-radius: 40px;">
+            </div>
+            <div class="total-card">
+                <span>📉 المتبقي</span>
+                <div class="value" id="remainingAmount">0</div>
+            </div>
+            <div class="field-group" style="min-width: 140px;">
+                <label>نسبة الإشراف (%)</label>
+                <input type="number" id="supervisionPercent" value="0" step="0.5" style="border-radius: 40px;">
+            </div>
+            <button id="generatePdfBtn" class="btn-generate">📄 إنشاء PDF احترافي</button>
+        </div>
+        <div style="font-size: 12px; color:#2d6a4f; margin-top: 10px; text-align: center;">* العمليات الرياضية تلقائية: المجموع الكلي يتغير مع البنود، والمتبقي = الكلي - الواصل</div>
+    </div>
+    <div class="footer-note">
+        <div>شركة مقاولات البناء المتكاملة | نظام إدارة المشاريع الهندسية</div>
+        <div class="copyright">© حقوق النشر محفوظة للمطور مرتضى أحمد</div>
+    </div>
+</div>
+
+<script>
+    let itemsArray = [];
+    let currentEngineerName = "";
+
+    // DOM elements
+    const modal = document.getElementById('loginModal');
+    const mainApp = document.getElementById('mainApp');
+    const engineerNameInput = document.getElementById('engineerNameInput');
+    const confirmLoginBtn = document.getElementById('confirmLoginBtn');
+    const resetEngineerBtn = document.getElementById('resetEngineerBtn');
+    const superEngineerField = document.getElementById('superEngineer');
+    const workLocationField = document.getElementById('workLocation');
+    const ownerNameField = document.getElementById('ownerName');
+    const companyPhoneField = document.getElementById('companyPhone');
+    const engineerPhoneField = document.getElementById('engineerPhone');
+    const itemsTableBody = document.getElementById('itemsTableBody');
+    const addRowBtn = document.getElementById('addRowBtn');
+    const totalSumSpan = document.getElementById('totalSum');
+    const amountPaidInput = document.getElementById('amountPaid');
+    const remainingSpan = document.getElementById('remainingAmount');
+    const supervisionPercentInput = document.getElementById('supervisionPercent');
+    const generatePdfBtn = document.getElementById('generatePdfBtn');
+
+    function formatNumber(num) {
+        if (isNaN(num)) num = 0;
+        return Number(num).toLocaleString('ar-IQ');
+    }
+
+    function updateTotalsAndRemaining() {
+        let total = 0;
+        for (let item of itemsArray) {
+            let price = parseFloat(item.price);
+            if (isNaN(price)) price = 0;
+            total += price;
+        }
+        totalSumSpan.innerText = formatNumber(total);
+        let paid = parseFloat(amountPaidInput.value);
+        if (isNaN(paid)) paid = 0;
+        let remaining = total - paid;
+        if (remaining < 0) remaining = 0;
+        remainingSpan.innerText = formatNumber(remaining);
+        return total;
+    }
+
+    function renderItemsTable() {
+        itemsTableBody.innerHTML = '';
+        if (itemsArray.length === 0) {
+            itemsArray.push({ description: "", price: 0 });
+        }
+        for (let i = 0; i < itemsArray.length; i++) {
+            const item = itemsArray[i];
+            const row = document.createElement('tr');
+            const descTd = document.createElement('td');
+            const descInput = document.createElement('input');
+            descInput.type = 'text';
+            descInput.value = item.description;
+            descInput.placeholder = 'وصف البند';
+            descInput.addEventListener('input', (function(idx) {
+                return function(e) { itemsArray[idx].description = e.target.value; };
+            })(i));
+            descTd.appendChild(descInput);
+            const priceTd = document.createElement('td');
+            const priceInput = document.createElement('input');
+            priceInput.type = 'number';
+            priceInput.value = item.price;
+            priceInput.step = "1000";
+            priceInput.placeholder = 'السعر بالدينار';
+            priceInput.addEventListener('input', (function(idx) {
+                return function(e) {
+                    let val = parseFloat(e.target.value);
+                    if (isNaN(val)) val = 0;
+                    itemsArray[idx].price = val;
+                    updateTotalsAndRemaining();
+                };
+            })(i));
+            priceTd.appendChild(priceInput);
+            const actionTd = document.createElement('td');
+            const removeBtn = document.createElement('button');
+            removeBtn.innerText = '✖ حذف';
+            removeBtn.classList.add('remove-row-btn');
+            removeBtn.addEventListener('click', (function(idx) {
+                return function() {
+                    if (itemsArray.length > 1) {
+                        itemsArray.splice(idx, 1);
+                        renderItemsTable();
+                        updateTotalsAndRemaining();
+                    } else {
+                        alert("يجب أن يبقى بند واحد على الأقل.");
+                    }
+                };
+            })(i));
+            actionTd.appendChild(removeBtn);
+            row.appendChild(descTd);
+            row.appendChild(priceTd);
+            row.appendChild(actionTd);
+            itemsTableBody.appendChild(row);
+        }
+        updateTotalsAndRemaining();
+    }
+
+    function addNewRow() {
+        itemsArray.push({ description: "", price: 0 });
+        renderItemsTable();
+    }
+
+    function getFormDataForPDF() {
+        const total = parseFloat(totalSumSpan.innerText.replace(/,/g, '')) || 0;
+        const paid = parseFloat(amountPaidInput.value) || 0;
+        const remaining = parseFloat(remainingSpan.innerText.replace(/,/g, '')) || 0;
+        const supervisionPercent = parseFloat(supervisionPercentInput.value) || 0;
+        return {
+            workLocation: workLocationField.value.trim() || "غير محدد",
+            ownerName: ownerNameField.value.trim() || "غير محدد",
+            superEngineer: superEngineerField.value.trim() || "غير محدد",
+            companyPhone: companyPhoneField.value.trim() || "٠٧٨٦٦٠٠٢٢٦٦",
+            engineerPhone: engineerPhoneField.value.trim() || "غير محدد",
+            items: itemsArray.map(item => ({ desc: item.description || "---", price: item.price || 0 })),
+            totalSum: total,
+            amountPaid: paid,
+            remaining: remaining,
+            supervisionPercent: supervisionPercent
+        };
+    }
+
+    function loadLogoAsImageURL() {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.crossOrigin = "Anonymous";
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                resolve(canvas.toDataURL('image/png'));
+            };
+            img.onerror = () => resolve(null);
+            img.src = "image-removebg-preview.png";
+        });
+    }
+
+    async function generateProfessionalPDF() {
+        const data = getFormDataForPDF();
+        
+        // Create container with professional frame/border
+        const pdfContainer = document.createElement('div');
+        pdfContainer.style.position = 'absolute';
+        pdfContainer.style.top = '-9999px';
+        pdfContainer.style.right = '-9999px';
+        pdfContainer.style.width = '210mm';
+        pdfContainer.style.backgroundColor = '#ffffff';
+        pdfContainer.style.fontFamily = "'Segoe UI', 'Tahoma', 'Cairo', sans-serif";
+        pdfContainer.style.direction = 'rtl';
+        pdfContainer.style.boxSizing = 'border-box';
+        
+        // Add outer frame (border + inner padding)
+        pdfContainer.innerHTML = `
+            <div style="border: 3px solid #e6b422; border-radius: 24px; margin: 8mm; padding: 8mm; background: white; box-shadow: 0 0 0 2px #0a2b3e;">
+                <div style="border-bottom: 3px solid #e6b422; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <img src="image-removebg-preview.png" onerror="this.src='https://via.placeholder.com/70?text=Logo'" style="width: 70px; height: auto; border-radius: 12px;" alt="شعار">
+                        <div>
+                            <h2 style="color: #0a2b3e; margin:0;">مكتب أعضاء لبنان</h2>
+                            <p style="color: #555; margin:0;">شركة مقاولات البناء والإنشاءات</p>
+                        </div>
+                    </div>
+                    <div style="text-align: left;">
+                        <p style="font-weight: bold;">${new Date().toLocaleDateString('ar-EG')}</p>
+                        <p>تقرير إشرافي / فاتورة</p>
+                    </div>
+                </div>
+                
+                <div style="background: #f1f5f9; padding: 12px 18px; border-radius: 16px; margin-bottom: 25px;">
+                    <h3 style="color:#0f3b2c; margin-top:0;">📌 بيانات المشروع</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div><strong>📍 موقع العمل:</strong> ${data.workLocation}</div>
+                        <div><strong>🏠 صاحب الموقع:</strong> ${data.ownerName}</div>
+                        <div><strong>👷 المهندس المشرف:</strong> ${data.superEngineer}</div>
+                        <div><strong>📞 هاتف الشركة:</strong> ${data.companyPhone}</div>
+                        <div><strong>📱 هاتف المهندس:</strong> ${data.engineerPhone}</div>
+                    </div>
+                </div>
+                
+                <h3 style="color:#1e3a5f; border-right: 6px solid #e6b422; padding-right: 12px;">🧾 تفاصيل الأعمال والبنود</h3>
+                <table style="width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 14px;">
+                    <thead>
+                        <tr style="background-color: #0a2b3e; color: white;">
+                            <th style="padding: 12px; border: 1px solid #cbd5e1;">#</th>
+                            <th style="padding: 12px; border: 1px solid #cbd5e1;">البيان</th>
+                            <th style="padding: 12px; border: 1px solid #cbd5e1;">السعر (د.ع)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.items.map((item, idx) => `
+                            <tr>
+                                <td style="padding: 8px; border: 1px solid #ddd; text-align:center;">${idx+1}</td>
+                                <td style="padding: 8px; border: 1px solid #ddd;">${item.desc}</td>
+                                <td style="padding: 8px; border: 1px solid #ddd; text-align:left;">${formatNumber(item.price)} دينار</td>
+                            </tr>
+                        `).join('')}
+                        ${data.items.length === 0 ? '<tr><td colspan="3" style="text-align:center;">لا توجد بنود مسجلة</td></tr>' : ''}
+                    </tbody>
+                </table>
+                
+                <div style="background: #fef9e6; border-radius: 20px; padding: 16px 20px; margin-top: 20px;">
+                    <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
+                        <div><strong>💰 المجموع الكلي:</strong> <span style="font-size: 1.3rem; font-weight: bold;">${formatNumber(data.totalSum)} د.ع</span></div>
+                        <div><strong>💵 الواصل (المدفوع):</strong> ${formatNumber(data.amountPaid)} د.ع</div>
+                        <div><strong>📉 المتبقي:</strong> ${formatNumber(data.remaining)} د.ع</div>
+                        <div><strong>📊 نسبة الإشراف:</strong> ${data.supervisionPercent} %</div>
+                    </div>
+                    <hr style="margin: 12px 0; border-color:#e6b422;">
+                    <div style="text-align: left; font-size: 12px; color: #2c3e50;">* تم إصدار هذا التقرير بواسطة نظام إدارة المشاريع الهندسية</div>
+                </div>
+                <div style="margin-top: 20px; text-align: center; font-size: 11px; color:#888; border-top:1px solid #ddd; padding-top: 12px;">
+                    شكراً للتعاون - مكتب أعضاء لبنان للمقاولات | هاتف: ${data.companyPhone}
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(pdfContainer);
+        try {
+            const canvas = await html2canvas(pdfContainer, {
+                scale: 2,
+                backgroundColor: '#ffffff',
+                logging: false,
+                useCORS: true
+            });
+            
+            // Watermark with company logo
+            const watermarkImgUrl = await loadLogoAsImageURL();
+            const finalCanvas = document.createElement('canvas');
+            finalCanvas.width = canvas.width;
+            finalCanvas.height = canvas.height;
+            const ctx = finalCanvas.getContext('2d');
+            ctx.drawImage(canvas, 0, 0);
+            
+            if (watermarkImgUrl) {
+                const watermarkImg = new Image();
+                await new Promise((resolve) => {
+                    watermarkImg.onload = () => {
+                        const wmWidth = finalCanvas.width * 0.35;
+                        const wmHeight = (watermarkImg.height * wmWidth) / watermarkImg.width;
+                        const x = (finalCanvas.width - wmWidth) / 2;
+                        const y = (finalCanvas.height - wmHeight) / 2;
+                        ctx.globalAlpha = 0.12;
+                        ctx.drawImage(watermarkImg, x, y, wmWidth, wmHeight);
+                        ctx.globalAlpha = 1.0;
+                        resolve();
+                    };
+                    watermarkImg.onerror = () => resolve();
+                    watermarkImg.src = watermarkImgUrl;
+                });
+            }
+            
+            const imgData = finalCanvas.toDataURL('image/png');
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+            const imgWidth = 210;
+            const pageHeight = 297;
+            const imgHeight = (finalCanvas.height * imgWidth) / finalCanvas.width;
+            let position = 0;
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            if (imgHeight > pageHeight) {
+                let heightLeft = imgHeight - pageHeight;
+                while (heightLeft > 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+            }
+            
+            // File name based on owner name
+            let ownerNameForFile = ownerNameField.value.trim();
+            if (!ownerNameForFile) ownerNameForFile = "تقرير_مشروع";
+            const safeFileName = ownerNameForFile.replace(/[\\/*?:"<>|]/g, "_").replace(/\s+/g, '_');
+            pdf.save(`${safeFileName}.pdf`);
+        } catch (error) {
+            console.error(error);
+            alert("حدث خطأ أثناء إنشاء PDF، تأكد من اتصال الإنترنت أو حاول مرة أخرى.");
+        } finally {
+            document.body.removeChild(pdfContainer);
+        }
+    }
+
+    function initMainApp(engineerName) {
+        currentEngineerName = engineerName;
+        superEngineerField.value = engineerName;
+        if (itemsArray.length === 0) {
+            itemsArray.push({ description: "أعمال الحفر والردم", price: 1500000 });
+            itemsArray.push({ description: "صب الأساسات والخرسانة", price: 4200000 });
+        }
+        renderItemsTable();
+        if (!companyPhoneField.value) companyPhoneField.value = "07866002266";
+        amountPaidInput.value = "0";
+        updateTotalsAndRemaining();
+        amountPaidInput.addEventListener('input', () => updateTotalsAndRemaining());
+    }
+
+    // LocalStorage logic
+    const STORAGE_KEY = 'engineerLogged';
+    const STORAGE_NAME_KEY = 'engineerNameStorage';
+
+    function checkFirstLogin() {
+        const isLogged = localStorage.getItem(STORAGE_KEY);
+        const savedEngineer = localStorage.getItem(STORAGE_NAME_KEY);
+        if (isLogged === 'true' && savedEngineer) {
+            modal.style.display = 'none';
+            mainApp.classList.remove('hidden-app');
+            initMainApp(savedEngineer);
+        } else {
+            modal.style.display = 'flex';
+            mainApp.classList.add('hidden-app');
+        }
+    }
+
+    function performLogin() {
+        let engineerName = engineerNameInput.value.trim();
+        if (engineerName === "") {
+            alert("الرجاء إدخال اسم المهندس المشرف");
+            return;
+        }
+        localStorage.setItem(STORAGE_KEY, 'true');
+        localStorage.setItem(STORAGE_NAME_KEY, engineerName);
+        modal.style.display = 'none';
+        mainApp.classList.remove('hidden-app');
+        initMainApp(engineerName);
+    }
+
+    function resetEngineer() {
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(STORAGE_NAME_KEY);
+        location.reload();
+    }
+
+    confirmLoginBtn.addEventListener('click', performLogin);
+    engineerNameInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') performLogin(); });
+    resetEngineerBtn.addEventListener('click', resetEngineer);
+    addRowBtn.addEventListener('click', addNewRow);
+    generatePdfBtn.addEventListener('click', generateProfessionalPDF);
+    
+    window.addEventListener('DOMContentLoaded', checkFirstLogin);
+</script>
+</body>
+</html>
